@@ -2,14 +2,13 @@
   <div class="wrapper">
     <div class="header-wrapper">
       <div class="header-title">
-        <span>空气质量 良好</span>
-        <span>南宁市</span>
+        <span>紫外线强度-{{ uvStrength }}</span>
+        <span>{{ city }}</span>
       </div>
       <div class="header-text">
-        <span>55</span>
-        <span>阴天</span>
+        <span>{{ Temp }}℃</span>
+        <span>{{ weather }}</span>
       </div>
-      <div class="weather-advice">空气质量良好，外出活动无需刻意防护</div>
     </div>
 
     <div class="body-wrapper">
@@ -50,7 +49,6 @@
             </div>
           </div>
         </div>
-        
       </div>
     </div>
   </div>
@@ -58,7 +56,55 @@
 
 <script>
 export default {
-  data() {},
+  data() {
+    return {
+      temp: 0,
+      light: 0,
+
+      Temp:0,
+      city: "Requesting", //城市
+      weather: "Requesting", //天气
+      uvStrength:"Requesting"//紫外线强度
+    };
+  },
+
+  onShow() {
+    var that = this;
+    //获取位置经纬度
+    wx.getLocation({
+      type: "wgs84",
+      success(res) {
+        console.log("获取位置成功");
+        const latitude = res.latitude;
+        const longitude = res.longitude;
+        const key = "17437659bebb44ddb347044bc5de771b";
+
+        //获取天气数据api接口地址
+        wx.request({
+          url: `https://api.seniverse.com/v3/weather/now.json?key=Skwkb_ygUiixRsnsj&location=${latitude}:${longitude}&language=zh-Hans&unit=c`,
+          success(res) {
+            console.log(res.data);
+            const Data = res.data;
+            // console.log(Data.results[0].location.name);
+            that.city = Data.results[0].location.name;
+            that.weather = Data.results[0].now.text;
+            that.Temp = Data.results[0].now.temperature;
+          },
+        });
+
+        //获取生活指数数据api接口地址
+        wx.request({
+          url: `https://api.seniverse.com/v3/life/suggestion.json?key=Skwkb_ygUiixRsnsj&location=${latitude}:${longitude}&language=zh-Hans`,
+          success(res) {
+            console.log(res.data);
+            const Data = res.data;
+            that.uvStrength = Data.results[0].suggestion.uv.brief;
+            
+          },
+        });
+      },
+    });
+  },
 
   components: {},
 
@@ -82,6 +128,7 @@ export default {
     .header-title {
       display: flex;
       justify-content: space-between;
+      margin-bottom:20px;
     }
     .header-text {
       font-size: 32px;
